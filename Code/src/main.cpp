@@ -52,6 +52,7 @@ int motorSpeed=0;
 unsigned long lastMicros = 0;
 unsigned long lastMilis = 0;
 
+char tbp[30]="";
 /* ------------- Initial Check ------------*/
 
 void static initial_Check()
@@ -114,7 +115,7 @@ void setup()
 	interrupts();
 
 	Motor::getInstance()->setSpeed(255);
-	//Motor::getInstance()->setDirection(DIRECTION_CLOSE);
+	Motor::getInstance()->setDirection(DIRECTION_CLOSE);
 	Motor::getInstance()->initEnc(PinConfiguration::motorEncoderPin, INPUT, enc_callback, RISING);
 	//initial_Check();
 }
@@ -137,7 +138,7 @@ void loop()
 		delay(500);
 		Motor::getInstance()->motorStop();
 		Motor::getInstance()->setSpeed(255);
-		pid->resetParams();
+		//pid->resetParams();
 		ON_button->set_Clicked(false);
 	}
 
@@ -154,7 +155,7 @@ void loop()
 		encValid = 0;
 	}*/
 	//Serial.println(179-respCycle->Potentiometer_Read());
-	if(Motor::getInstance()->getStatus()==MOTOR_IS_ON){
+	/*if(Motor::getInstance()->getStatus()==MOTOR_IS_ON){
 		if(millis()-lastMilis>=10){			
 			lastMilis=millis();			
 			motorSpeed=pid->Calc(respCycle->Potentiometer_Read(), Motor::getInstance()->getEncRPM());
@@ -163,7 +164,19 @@ void loop()
 			//Serial.println(Motor::getInstance()->getEncRPM());
 			//Serial.println(respCycle->Potentiometer_Read());
 		}
+	}*/
+	if(Motor::getInstance()->getStatus()==MOTOR_IS_ON){
+		for(size_t i=255; i>=0; i--){
+			Motor::getInstance()->setSpeed(i);
+			for (size_t j = 0; j < 7; j++)
+			{
+				delay(100);
+				Motor::getInstance()->getEncRPM();
+			}
+			delay(100);
+			sprintf(tbp,"%d\t%ld",i,round(Motor::getInstance()->getEncRPM()*100));
+			Serial.println(tbp);							
+		}	
 	}
-	
 	wdt_reset();
 }
