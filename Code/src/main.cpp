@@ -53,6 +53,7 @@ unsigned long lastMicros = 0;
 unsigned long lastMilis = 0;
 
 char tbp[30]="";
+int mtrSpd=240;
 /* ------------- Initial Check ------------*/
 
 void static initial_Check()
@@ -115,7 +116,7 @@ void setup()
 	interrupts();
 
 	Motor::getInstance()->setSpeed(255);
-	Motor::getInstance()->setDirection(DIRECTION_CLOSE);
+	Motor::getInstance()->setDirection(DIRECTION_OPEN);
 	Motor::getInstance()->initEnc(PinConfiguration::motorEncoderPin, INPUT, enc_callback, RISING);
 	//initial_Check();
 }
@@ -143,10 +144,11 @@ void loop()
 	}
 
 	if(open_uSwitch->get_Clicked()==true){
-		TCNT5=0;
-		encFalled = 0;
-		encValid = 0;		
-		Motor::getInstance()->changeDirection();
+		//TCNT5=0;
+		//encFalled = 0;
+		//encValid = 0;		
+		//Motor::getInstance()->changeDirection();
+		mtrSpd--;
 		open_uSwitch->set_Clicked(false);
 	}
 
@@ -166,16 +168,11 @@ void loop()
 		}
 	}*/
 	if(Motor::getInstance()->getStatus()==MOTOR_IS_ON){
-		//for(size_t i=240; i>=0; i--){
-			//Motor::getInstance()->setSpeed(i);
-			Motor::getInstance()->setSpeed(229);
-			/*for (size_t j = 0; j < 7; j++)
-			{
-				delay(200);
-				Motor::getInstance()->getEncRPM();
-			}*/
-			delay(500);
-			//sprintf(tbp,"%d\t%ld",i,round(Motor::getInstance()->getEncRPM()*100));
+		//for(size_t i=240; i>=140; i--){
+			Motor::getInstance()->setSpeed(mtrSpd);
+			Motor::getInstance()->getEncRPM();
+			delay(100);
+			sprintf(tbp,"%d\t%ld",mtrSpd,round(Motor::getInstance()->getEncRPM()*100));
 			Serial.println(tbp);							
 		//}	
 	}
