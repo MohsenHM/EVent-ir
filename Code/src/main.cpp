@@ -57,11 +57,13 @@ unsigned long lastMilis = 0;
 
 char tbp[30] = "";
 int printCounter = 0;
-int j = 0;
+int j = 0, k=0;
 const int loopParam = 4;
 
 float x[50];
 float RPM[50];
+
+int motorSpeeds[7]={80,255,220,255,130,255,180,255};
 
 /* ------------- Initial Check ------------*/
 
@@ -89,7 +91,7 @@ void setup()
 	Init_Timer3();
 	Init_Timer4();
 	Init_Timer5();
-	TCCR1B = (TCCR1B & 0b11111000) | 0x02;
+	TCCR1B = (TCCR1B & 0b11111000) | 0x01;
 
 	Serial.begin(9600);
 
@@ -124,7 +126,7 @@ void setup()
 	pid->setTimeStep(8e-3);
 	pid->setOutputRange(0, 255);
 
-	float duration = 2;
+	float duration = 1;
 	trajectory = new Trajectory(duration / (loopParam * pid->getTimeStep()), 360, 0, 0, duration);
 	trajectory->calcTrajec();
 
@@ -139,15 +141,15 @@ void loop()
 {
 
 	//mot_Driver->update_resp_rate(Global_SysConfig);
-	//if(ON_button->get_On_Off()==BSTATE_ON)
 	//mot_Driver->check();
 	//LCD::getInstance()->LCD_Menu(respVolume->Potentiometer_Read(), respCycle->Potentiometer_Read(), IERatio->Potentiometer_Read());
 	if (ON_button->get_Clicked() == true && ON_button->get_On_Off() == BSTATE_ON)
 	{
 		Motor::getInstance()->resetEncPeriod();
 		Motor::getInstance()->resetPC();
-		//Motor::getInstance()->setSpeed(200);
+		Motor::getInstance()->setSpeed(motorSpeeds[k]);	
 		Motor::getInstance()->motorStart();
+		Serial.println(Motor::getInstance()->getEncRPM());
 		ON_button->set_Clicked(false);
 		Global_SysConfig->set_Start_Time();
 	}
@@ -169,9 +171,26 @@ void loop()
 		open_uSwitch->set_Clicked(false);
 	}
 
+
 	if (Motor::getInstance()->getStatus() == MOTOR_IS_ON)
 	{
-		while (j < loopParam * trajectory->getResolution())
+		
+			if (millis() - lastMilis >= (pid->getTimeStep()) * 1e3){
+				Motor::getInstance()->setSpeed(motorSpeeds[k]);
+				Serial.println(Motor::getInstance()->getEncRPM());	
+				j++;
+				if(j==200){
+					j=0;
+					k++;
+					if (k==7){
+						Motor::getInstance()->motorStop();
+						Motor::getInstance()->resetEncPeriod();
+						Motor::getInstance()->resetPC();	
+					}				
+				}
+			}
+		
+		/*while (j < loopParam * trajectory->getResolution())
 		{
 
 			if (millis() - lastMilis >= (pid->getTimeStep()) * 1e3)
@@ -196,17 +215,8 @@ void loop()
 		Motor::getInstance()->motorStop();
 		Motor::getInstance()->resetEncPeriod();		
 		pid->resetParams();
-		ON_button->set_On_Off();
+		ON_button->set_On_Off();*/
 		
-		// if(millis()-Global_SysConfig->get_Start_Time()>=800){
-		// 	Motor::getInstance()->motorStop();
-		// 	j=0;
-		// }
-		//if(printCounter==10e3){
-
-		//printCounter=0;
-		//}
-		//printCounter++;
 	}
 
 	wdt_reset();
