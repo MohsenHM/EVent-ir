@@ -82,6 +82,8 @@ void static initial_Check()
 	}
 }
 
+void static motor
+
 void setup()
 {
 	noInterrupts();
