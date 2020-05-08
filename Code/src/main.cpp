@@ -63,7 +63,8 @@ const int loopParam = 4;
 float x[50];
 float RPM[50];
 
-int motorSpeeds[7]={80,255,220,255,130,255,180,255};
+int timeStepValid = 0;
+int motorSpeeds[20]={230,255,210,255,190,255,170,255,150,255,130,255,110,255,90,255,70,255,50,255};
 
 /* ------------- Initial Check ------------*/
 
@@ -150,6 +151,8 @@ void loop()
 		Motor::getInstance()->setSpeed(motorSpeeds[k]);	
 		Motor::getInstance()->motorStart();
 		Serial.println(Motor::getInstance()->getEncRPM());
+		OCR4A  = 77;
+		TCCR4B |= (1 << WGM12)|(1<<CS10) | (1<<CS12) ;
 		ON_button->set_Clicked(false);
 		Global_SysConfig->set_Start_Time();
 	}
@@ -171,24 +174,23 @@ void loop()
 		open_uSwitch->set_Clicked(false);
 	}
 
-
 	if (Motor::getInstance()->getStatus() == MOTOR_IS_ON)
-	{
-		
-			if (millis() - lastMilis >= (pid->getTimeStep()) * 1e3){
-				Motor::getInstance()->setSpeed(motorSpeeds[k]);
-				Serial.println(Motor::getInstance()->getEncRPM());	
-				j++;
-				if(j==200){
-					j=0;
-					k++;
-					if (k==7){
-						Motor::getInstance()->motorStop();
-						Motor::getInstance()->resetEncPeriod();
-						Motor::getInstance()->resetPC();	
-					}				
-				}
+	{	
+		if (timeStepValid){
+			timeStepValid=0;
+			Motor::getInstance()->setSpeed(motorSpeeds[k]);
+			Serial.println(Motor::getInstance()->getEncRPM());	
+			j++;
+			if(j==200){
+				j=0;
+				k++;
+				if (k==20){
+					Motor::getInstance()->motorStop();
+					Motor::getInstance()->resetEncPeriod();
+					Motor::getInstance()->resetPC();	
+				}				
 			}
+		}
 		
 		/*while (j < loopParam * trajectory->getResolution())
 		{
