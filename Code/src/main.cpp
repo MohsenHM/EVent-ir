@@ -57,14 +57,16 @@ unsigned long lastMilis = 0;
 
 char tbp[30] = "";
 int printCounter = 0;
-int j = 0, k=0;
+int j = 1, k=0;
 const int loopParam = 4;
 
 float x[50];
 float RPM[50];
 
 int timeStepValid = 0;
-int motorSpeeds[20]={230,255,210,255,190,255,170,255,150,255,130,255,110,255,90,255,70,255,50,255};
+int motorSpeeds[8]={240,255,230,250,220,255,210,255};
+float motorRpms[400*8+1];
+int8_t dir[400*8+1];
 
 /* ------------- Initial Check ------------*/
 
@@ -82,8 +84,6 @@ void static initial_Check()
 	}
 }
 
-void static motor
-
 void setup()
 {
 	noInterrupts();
@@ -94,7 +94,7 @@ void setup()
 	Init_Timer3();
 	Init_Timer4();
 	Init_Timer5();
-	TCCR1B = (TCCR1B & 0b11111000) | 0x01;
+	//TCCR1B = (TCCR1B & 0b11111000) | 0x02;
 
 	Serial.begin(9600);
 
@@ -134,9 +134,8 @@ void setup()
 	trajectory->calcTrajec();
 
 	interrupts();
-
-	Motor::getInstance()->setSpeed(255);
-	//Motor::getInstance()->setDirection(DIRECTION_CLOSE);
+	Motor::getInstance()->setSpeed(230);
+	//Motor::getInstance()->setDirection(DIRECTION_OPEN);
 	Motor::getInstance()->initEnc(PinConfiguration::motorEncoderPin, INPUT, enc_callback, RISING);
 	//initial_Check();
 }
@@ -152,7 +151,6 @@ void loop()
 		Motor::getInstance()->resetPC();
 		Motor::getInstance()->setSpeed(motorSpeeds[k]);	
 		Motor::getInstance()->motorStart();
-		Serial.println(Motor::getInstance()->getEncRPM());
 		OCR4A  = 77;
 		TCCR4B |= (1 << WGM12)|(1<<CS10) | (1<<CS12) ;
 		ON_button->set_Clicked(false);
@@ -178,18 +176,27 @@ void loop()
 
 	if (Motor::getInstance()->getStatus() == MOTOR_IS_ON)
 	{	
+		
 		if (timeStepValid){
 			timeStepValid=0;
 			Motor::getInstance()->setSpeed(motorSpeeds[k]);
-			Serial.println(Motor::getInstance()->getEncRPM());	
+			motorRpms[j]=Motor::getInstance()->getEncRPM();	
+			dir[j]=digitalRead(PinConfiguration::motorDirectionPin);	
 			j++;
-			if(j==200){
-				j=0;
+			/*if(j==500){
+				Motor::getInstance()->changeDirection();
+			}*/
+			if(j%400==0){
 				k++;
-				if (k==20){
+				if (k==8){
 					Motor::getInstance()->motorStop();
 					Motor::getInstance()->resetEncPeriod();
-					Motor::getInstance()->resetPC();	
+					Motor::getInstance()->resetPC();
+					for (int i = 0; i < j; i++)
+					{
+						Serial.println(motorRpms[i]);
+					}
+					j=0;						
 				}				
 			}
 		}
