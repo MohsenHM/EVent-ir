@@ -57,16 +57,17 @@ unsigned long lastMilis = 0;
 
 char tbp[30] = "";
 int printCounter = 0;
-int j = 1, k=0;
+int j = 0, k=0;
 const int loopParam = 4;
 
 float x[50];
 float RPM[50];
 
 int timeStepValid = 0;
-int motorSpeeds[8]={240,255,230,250,220,255,210,255};
-float motorRpms[400*8+1];
-int8_t dir[400*8+1];
+int motorSpeeds[10]={235,255,225,255,215,255,205,255,195,255};
+int motorRpms[500*2+1];
+//int8_t dir[500*2+1];
+int pc[500*2+1];
 
 /* ------------- Initial Check ------------*/
 
@@ -94,9 +95,9 @@ void setup()
 	Init_Timer3();
 	Init_Timer4();
 	Init_Timer5();
-	//TCCR1B = (TCCR1B & 0b11111000) | 0x02;
+	TCCR1B = (TCCR1B & 0b11111000) | 0x02;
 
-	Serial.begin(9600);
+	Serial.begin(115200);
 
 	Global_SysConfig = new SysConfig(2, 20, 0);
 	PinConfiguration::getInstance()->pinConfiguration();
@@ -126,7 +127,7 @@ void setup()
 	IERatio->set_Range(table_IE, sizeof table_IE);
 
 	pid = new PID((float)3, (float)48, (float)0.025);
-	pid->setTimeStep(8e-3);
+	pid->setTimeStep(5e-3);
 	pid->setOutputRange(0, 255);
 
 	float duration = 1;
@@ -134,7 +135,8 @@ void setup()
 	trajectory->calcTrajec();
 
 	interrupts();
-	Motor::getInstance()->setSpeed(230);
+	Motor::getInstance()->setSpeed(250);
+	Motor::getInstance()->motorStart();
 	//Motor::getInstance()->setDirection(DIRECTION_OPEN);
 	Motor::getInstance()->initEnc(PinConfiguration::motorEncoderPin, INPUT, enc_callback, RISING);
 	//initial_Check();
@@ -147,6 +149,7 @@ void loop()
 	//LCD::getInstance()->LCD_Menu(respVolume->Potentiometer_Read(), respCycle->Potentiometer_Read(), IERatio->Potentiometer_Read());
 	if (ON_button->get_Clicked() == true && ON_button->get_On_Off() == BSTATE_ON)
 	{
+		Motor::getInstance()->setSpeed(240);
 		Motor::getInstance()->resetEncPeriod();
 		Motor::getInstance()->resetPC();
 		Motor::getInstance()->setSpeed(motorSpeeds[k]);	
@@ -179,22 +182,26 @@ void loop()
 		
 		if (timeStepValid){
 			timeStepValid=0;
-			Motor::getInstance()->setSpeed(motorSpeeds[k]);
-			motorRpms[j]=Motor::getInstance()->getEncRPM();	
-			dir[j]=digitalRead(PinConfiguration::motorDirectionPin);	
+			
+			motorRpms[j]=round(Motor::getInstance()->getEncRPM());	
+			pc[j]=Motor::getInstance()->getPC();	
 			j++;
-			/*if(j==500){
-				Motor::getInstance()->changeDirection();
-			}*/
-			if(j%400==0){
+			if(j%500==0){
 				k++;
-				if (k==8){
+				Motor::getInstance()->setSpeed(motorSpeeds[k]);
+				if(k==10){
 					Motor::getInstance()->motorStop();
 					Motor::getInstance()->resetEncPeriod();
 					Motor::getInstance()->resetPC();
+				}
+				if (k%2==0){
 					for (int i = 0; i < j; i++)
 					{
-						Serial.println(motorRpms[i]);
+						Serial.print(i);
+						Serial.print("\t");
+						Serial.print(motorRpms[i]);
+						Serial.print("\t");
+						Serial.println(pc[i]);
 					}
 					j=0;						
 				}				

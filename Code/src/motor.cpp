@@ -24,11 +24,10 @@ void Motor::initEnc(int pin, uint8_t ioMode, void (*callback_func)(void), int in
 
 void Motor::setEncPeriod(int encPeriod){
     this->encPeriod = encPeriod;
-    this->incrementPC();
 }
 
 void Motor::incrementPC(){
-    this->PC+=2;;
+    this->PC++;
 }
 
 void Motor::resetPC(){
@@ -67,7 +66,7 @@ void Motor::setMotorOut()
     if (this->motorStatus == MOTOR_IS_ON)
     {
         digitalWrite(PinConfiguration::motorOut1, this->direction);
-        delay(50);
+        //delay(50);
         digitalWrite(PinConfiguration::motorOut2, not(this->direction));
     }
     else
@@ -122,12 +121,17 @@ int Motor::getEncCount()
 void Motor::resetEncPeriod()
 {
     this->encPeriod = 0;
+    this->oldRPM = 0;
+}
+
+void Motor::resetEncRPM(){
+    resetEncPeriod();
 }
 
 float Motor::getEncRPM()
 {
     float RPM = 0;
-    float tempRPM = 0;
+    //float tempRPM = 0;
     int period = this->getEncPeriod();
     if(period>100){
         RPM = (float)period * (float)MOTOR_PULSE_PER_TURN * (float)4; 
