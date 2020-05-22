@@ -26,7 +26,7 @@ long testTimer = 0;
 /* Global Objects */
 SysConfig *Global_SysConfig;
 
-Button *ON_button;
+Button *onButton;
 Button *open_uSwitch;
 
 LED *gLED;
@@ -64,7 +64,7 @@ float x[50];
 float RPM[50];
 
 int timeStepValid = 0;
-int motorSpeeds[10]={235,255,225,255,215,255,205,255,195,255};
+int motorSpeeds[10]={8,0,15,0,20,0,25,0,35,0};
 int motorRpms[500*2+1];
 //int8_t dir[500*2+1];
 int pc[500*2+1];
@@ -92,10 +92,10 @@ void setup()
 	for (size_t i = 8; i <= 30; i++)
 		table_RC[i - 8] = i;
 
+	Init_Timer1();
 	Init_Timer3();
 	Init_Timer4();
 	Init_Timer5();
-	TCCR1B = (TCCR1B & 0b11111000) | 0x02;
 
 	Serial.begin(115200);
 
@@ -106,11 +106,11 @@ void setup()
 
 	//mot_Driver = new Motor_Driver(Motor::getInstance());
 
-	ON_button = new Button(PinConfiguration::onButton_pin, INPUT, onButton_callback, LOW);
+	onButton = new Button(PinConfiguration::onButton_pin, INPUT, onButton_callback, LOW);
 
 	open_uSwitch = new Button(PinConfiguration::open_uSw_pin, INPUT, open_uSw_callback, LOW);
 
-	gLED = new LED(PinConfiguration::gLED_pin);
+	//gLED = new LED(PinConfiguration::gLED_pin);
 
 	//ardLED = new LED(PinConfiguration::ardLED);
 
@@ -135,11 +135,13 @@ void setup()
 	trajectory->calcTrajec();
 
 	interrupts();
-	Motor::getInstance()->setSpeed(250);
+	digitalWrite(PinConfiguration::motorDriverOnOff, HIGH);
+	Motor::getInstance()->setSpeed(5);
 	Motor::getInstance()->motorStart();
 	//Motor::getInstance()->setDirection(DIRECTION_OPEN);
-	Motor::getInstance()->initEnc(PinConfiguration::motorEncoderPin, INPUT, enc_callback, RISING);
+	Motor::getInstance()->initEnc(PinConfiguration::motorEncoderPin, INPUT, enc_callback, FALLING);
 	//initial_Check();
+	Serial.println("here0");
 }
 void loop()
 {
@@ -147,25 +149,25 @@ void loop()
 	//mot_Driver->update_resp_rate(Global_SysConfig);
 	//mot_Driver->check();
 	//LCD::getInstance()->LCD_Menu(respVolume->Potentiometer_Read(), respCycle->Potentiometer_Read(), IERatio->Potentiometer_Read());
-	if (ON_button->get_Clicked() == true && ON_button->get_On_Off() == BSTATE_ON)
+	if (onButton->get_Clicked() == true && onButton->get_On_Off() == BSTATE_ON)
 	{
-		Motor::getInstance()->setSpeed(240);
+		Serial.println("here");
+		Motor::getInstance()->setSpeed(5);
 		Motor::getInstance()->resetEncPeriod();
 		Motor::getInstance()->resetPC();
 		Motor::getInstance()->setSpeed(motorSpeeds[k]);	
 		Motor::getInstance()->motorStart();
-		OCR4A  = 77;
-		TCCR4B |= (1 << WGM12)|(1<<CS10) | (1<<CS12) ;
-		ON_button->set_Clicked(false);
+		Timer1Start(77);
+		onButton->set_Clicked(false);
 		Global_SysConfig->set_Start_Time();
 	}
-	else if (ON_button->get_Clicked() == true && ON_button->get_On_Off() == BSTATE_OFF)
+	else if (onButton->get_Clicked() == true && onButton->get_On_Off() == BSTATE_OFF)
 	{
 		Motor::getInstance()->motorStop();
 		Motor::getInstance()->resetEncPeriod();
 		Motor::getInstance()->resetPC();
 		pid->resetParams();	
-		ON_button->set_Clicked(false);
+		onButton->set_Clicked(false);
 	}
 
 	if (open_uSwitch->get_Clicked() == true)
@@ -233,7 +235,7 @@ void loop()
 		Motor::getInstance()->motorStop();
 		Motor::getInstance()->resetEncPeriod();		
 		pid->resetParams();
-		ON_button->set_On_Off();*/
+		onButton->set_On_Off();*/
 		
 	}
 

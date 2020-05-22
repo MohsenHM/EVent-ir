@@ -4,7 +4,7 @@
 #include <configuration.h>
 #include <timers.h>
 
-extern Button *ON_button;
+extern Button *onButton;
 extern Button *open_uSwitch;
 extern volatile int encFalled;
 
@@ -12,7 +12,7 @@ extern volatile int encFalled;
 void onButton_callback()
 {
 	detachInterrupt(digitalPinToInterrupt(PinConfiguration::onButton_pin));
-    OCR3A   = 781;					
+    OCR3A   = 157;					
 	TCCR3B |= (1 << WGM12)|(1<<CS10) | (1<<CS12) ;
 }
 
@@ -20,7 +20,7 @@ void onButton_callback()
 void open_uSw_callback()
 {
 	detachInterrupt(digitalPinToInterrupt(PinConfiguration::open_uSw_pin));	
-	OCR4A  = 781;
+	OCR4A  = 157;
 	TCCR4B |= (1 << WGM12)|(1<<CS10) | (1<<CS12) ;	
 }
 
