@@ -64,7 +64,7 @@ float x[50];
 float RPM[50];
 
 int timeStepValid = 0;
-int motorSpeeds[10]={25,0,35,0,45,0,55,0,65,0};
+int motorSpeeds[10]={35,0,65,0,95,0,125,0,155,0};
 int motorRpms[500*2+1];
 //int8_t dir[500*2+1];
 int pc[500*2+1];
