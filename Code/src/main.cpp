@@ -59,6 +59,7 @@ char tbp[30] = "";
 int printCounter = 0;
 int j = 0, k=0;
 const int loopParam = 4;
+int motorStart = 0;
 
 float x[50];
 float RPM[50];
@@ -141,7 +142,6 @@ void setup()
 	//Motor::getInstance()->setDirection(DIRECTION_OPEN);
 	Motor::getInstance()->initEnc(PinConfiguration::motorEncoderPin, INPUT, enc_callback, FALLING);
 	//initial_Check();
-	Serial.println("here0");
 }
 void loop()
 {
@@ -156,19 +156,21 @@ void loop()
 		Motor::getInstance()->resetEncPeriod();
 		Motor::getInstance()->resetPC();
 		Motor::getInstance()->setSpeed(motorSpeeds[k]);	
-		Motor::getInstance()->motorStart();
+		motorStart = 1;
+		//Motor::getInstance()->motorStart();
 		Timer1Start(77);
 		onButton->set_Clicked(false);
 		Global_SysConfig->set_Start_Time();
 	}
 	else if (onButton->get_Clicked() == true && onButton->get_On_Off() == BSTATE_OFF)
 	{
-		Motor::getInstance()->motorStop();
+		//Motor::getInstance()->motorStop();
 		Motor::getInstance()->resetEncPeriod();
 		Motor::getInstance()->resetPC();
 		pid->resetParams();	
 		onButton->set_Clicked(false);
 		k=0;
+		motorStart = 0;
 	}
 
 	if (open_uSwitch->get_Clicked() == true)
@@ -180,9 +182,9 @@ void loop()
 		open_uSwitch->set_Clicked(false);
 	}
 
-	if (Motor::getInstance()->getStatus() == MOTOR_IS_ON)
+	//if (Motor::getInstance()->getStatus() == MOTOR_IS_ON)
+	if (motorStart)
 	{	
-		
 		if (timeStepValid){
 			timeStepValid=0;
 			
@@ -193,7 +195,7 @@ void loop()
 				k++;
 				Motor::getInstance()->setSpeed(motorSpeeds[k]);
 				if(k==10){
-					Motor::getInstance()->motorStop();
+					//Motor::getInstance()->motorStop();
 					Motor::getInstance()->resetEncPeriod();
 					Motor::getInstance()->resetPC();
 				}
