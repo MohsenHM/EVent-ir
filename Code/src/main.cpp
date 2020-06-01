@@ -65,10 +65,10 @@ float x[50];
 float RPM[50];
 
 int timeStepValid = 0;
-int motorSpeeds[10]={35,0,65,0,95,0,125,0,155,0};
-int motorRpms[500*2+1];
+int motorSpeeds[10]={10,0,15,0,20,0,25,0,30,0};
+int motorRpms[600*2+1];
 //int8_t dir[500*2+1];
-int pc[500*2+1];
+int pc[600*2+1];
 
 /* ------------- Initial Check ------------*/
 
@@ -137,9 +137,9 @@ void setup()
 
 	interrupts();
 	digitalWrite(PinConfiguration::motorDriverOnOff, HIGH);
-	Motor::getInstance()->setSpeed(25);
+	Motor::getInstance()->setSpeed(motorSpeeds[0]);
 	//Motor::getInstance()->motorStart();
-	//Motor::getInstance()->setDirection(DIRECTION_OPEN);
+	Motor::getInstance()->setDirection(DIRECTION_CLOSE);
 	Motor::getInstance()->initEnc(PinConfiguration::motorEncoderPin, INPUT, enc_callback, FALLING);
 	//initial_Check();
 }
@@ -157,14 +157,14 @@ void loop()
 		Motor::getInstance()->resetPC();
 		Motor::getInstance()->setSpeed(motorSpeeds[k]);	
 		motorStart = 1;
-		//Motor::getInstance()->motorStart();
+		Motor::getInstance()->motorStart();
 		Timer1Start(77);
 		onButton->set_Clicked(false);
 		Global_SysConfig->set_Start_Time();
 	}
 	else if (onButton->get_Clicked() == true && onButton->get_On_Off() == BSTATE_OFF)
 	{
-		//Motor::getInstance()->motorStop();
+		Motor::getInstance()->motorStop();
 		Motor::getInstance()->resetEncPeriod();
 		Motor::getInstance()->resetPC();
 		pid->resetParams();	
@@ -182,8 +182,8 @@ void loop()
 		open_uSwitch->set_Clicked(false);
 	}
 
-	//if (Motor::getInstance()->getStatus() == MOTOR_IS_ON)
-	if (motorStart)
+	if (Motor::getInstance()->getStatus() == MOTOR_IS_ON)
+	//if (motorStart)
 	{	
 		if (timeStepValid){
 			timeStepValid=0;
@@ -191,11 +191,11 @@ void loop()
 			motorRpms[j]=round(Motor::getInstance()->getEncRPM());	
 			pc[j]=Motor::getInstance()->getPC();	
 			j++;
-			if(j%500==0){
+			if(j%600==0){
 				k++;
 				Motor::getInstance()->setSpeed(motorSpeeds[k]);
 				if(k==10){
-					//Motor::getInstance()->motorStop();
+					Motor::getInstance()->motorStop();
 					Motor::getInstance()->resetEncPeriod();
 					Motor::getInstance()->resetPC();
 				}
@@ -212,33 +212,6 @@ void loop()
 				}				
 			}
 		}
-		
-		/*while (j < loopParam * trajectory->getResolution())
-		{
-
-			if (millis() - lastMilis >= (pid->getTimeStep()) * 1e3)
-			{
-				motorSpeed = pid->Calc(trajectory->getRPM((int)(j / loopParam)), Motor::getInstance()->getEncRPM());
-				Motor::getInstance()->setSpeed(motorSpeed);
-				Serial.print(j);
-				Serial.print("\t");
-				Serial.print(trajectory->getRPM((int)(j / loopParam)));
-				Serial.print("\t");
-				Serial.println(Motor::getInstance()->getSpeed());
-				//sprintf(tbp,"%d\t%ld\t", respCycle->Potentiometer_Read(), round(Motor::getInstance()->getEncRPM()*100)/100);
-				//Serial.print(tbp);
-				//Serial.print(pid->getError());
-				//Serial.print("\t");
-				//Serial.println(pid->getPidRealVal());
-				j++;
-			}
-		}
-		j = 0;
-		Serial.println(Motor::getInstance()->getPC());
-		Motor::getInstance()->motorStop();
-		Motor::getInstance()->resetEncPeriod();		
-		pid->resetParams();
-		onButton->set_On_Off();*/
 		
 	}
 
