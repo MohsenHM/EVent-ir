@@ -5,6 +5,7 @@
 extern Button *onButton;
 extern Button *open_uSwitch;
 extern int timeStepValid;
+extern int openSwitchHitTime;
 
 void Init_Timer1(){
 	TCCR1B = 0;
@@ -36,9 +37,8 @@ ISR(TIMER3_COMPA_vect)        // interrupt service routine that wraps a user def
 	TCNT3  = 0;
 	TIMSK3 = 0;
 	OCR3A  = 0;
-	if(onButton->get_Status()==BSTATE_LOW){
-		onButton->set_On_Off();
-		onButton->set_Clicked(true);		
+	if(open_uSwitch->get_Status()==BSTATE_LOW){
+		open_uSwitch->set_Clicked(true);
 	}		
 	OCR3B = 781*4;		
 	TIMSK3 |= (1 << OCIE3B);		 
@@ -47,24 +47,25 @@ ISR(TIMER3_COMPA_vect)        // interrupt service routine that wraps a user def
 ISR(TIMER3_COMPB_vect)        // interrupt service routine that wraps a user defined function supplied by attachInterrupt
 {
 	TCNT3 = 0;
-	if(onButton->get_Status()==BSTATE_HIGH){
+	if(open_uSwitch->get_Status()==BSTATE_HIGH){
 		TCCR3B = 0;			
 		TIMSK3 = 0;
 		OCR3B  = 0;
 		OCR3A  = 157;
 		TIMSK3= (1 << OCIE3A);  
-		onButton->enableInterrupt(onButton_callback);			
+		open_uSwitch->enableInterrupt(open_uSw_callback);			
 	}
 }
 
 ISR(TIMER1_COMPA_vect)        // interrupt service routine that wraps a user defined function supplied by attachInterrupt
 {
 	TCNT1  = 0;
-	timeStepValid = 1;	 
+	timeStepValid = 1;	
+	openSwitchHitTime++; 
 }
 
 void Timer1Start(int period){
-	TCNT1 = 0;
+	//TCNT1 = 0;
 	OCR1A = period;
 	TCCR1B |= (1 << WGM12) | (1 << CS10) | (1 << CS12);
 }

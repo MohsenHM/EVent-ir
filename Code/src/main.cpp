@@ -60,12 +60,14 @@ int printCounter = 0;
 int j = 0, k=0;
 const int loopParam = 4;
 int motorStart = 0;
+int openSwitchHitTime=0;
+
 
 float x[50];
 float RPM[50];
 
 int timeStepValid = 0;
-int motorSpeeds[10]={10,0,15,0,20,0,25,0,30,0};
+int motorSpeeds[10]={20,0,15,0,20,0,25,0,30,0};
 int motorRpms[600*2+1];
 //int8_t dir[500*2+1];
 int pc[600*2+1];
@@ -107,7 +109,8 @@ void setup()
 
 	//mot_Driver = new Motor_Driver(Motor::getInstance());
 
-	onButton = new Button(PinConfiguration::onButton_pin, INPUT, onButton_callback, LOW);
+	onButton = new Button(PinConfiguration::onButton_pin);
+	onButton->setPressCallback(onButton_callback);
 
 	open_uSwitch = new Button(PinConfiguration::open_uSw_pin, INPUT, open_uSw_callback, LOW);
 
@@ -131,10 +134,6 @@ void setup()
 	pid->setTimeStep(5e-3);
 	pid->setOutputRange(0, 255);
 
-	float duration = 1;
-	trajectory = new Trajectory(duration / (loopParam * pid->getTimeStep()), 360, 0, 0, duration);
-	trajectory->calcTrajec();
-
 	interrupts();
 	digitalWrite(PinConfiguration::motorDriverOnOff, HIGH);
 	Motor::getInstance()->setSpeed(motorSpeeds[0]);
@@ -149,18 +148,16 @@ void loop()
 	//mot_Driver->update_resp_rate(Global_SysConfig);
 	//mot_Driver->check();
 	//LCD::getInstance()->LCD_Menu(respVolume->Potentiometer_Read(), respCycle->Potentiometer_Read(), IERatio->Potentiometer_Read());
+	onButton->check();
 	if (onButton->get_Clicked() == true && onButton->get_On_Off() == BSTATE_ON)
 	{
 		Serial.println("here");
-		Motor::getInstance()->setSpeed(5);
 		Motor::getInstance()->resetEncPeriod();
 		Motor::getInstance()->resetPC();
 		Motor::getInstance()->setSpeed(motorSpeeds[k]);	
-		motorStart = 1;
 		Motor::getInstance()->motorStart();
-		Timer1Start(77);
+		//Timer1Start(77);
 		onButton->set_Clicked(false);
-		Global_SysConfig->set_Start_Time();
 	}
 	else if (onButton->get_Clicked() == true && onButton->get_On_Off() == BSTATE_OFF)
 	{
@@ -168,21 +165,22 @@ void loop()
 		Motor::getInstance()->resetEncPeriod();
 		Motor::getInstance()->resetPC();
 		pid->resetParams();	
-		onButton->set_Clicked(false);
 		k=0;
-		motorStart = 0;
+		openSwitchHitTime=0;		
+		onButton->set_Clicked(false);
+
 	}
 
 	if (open_uSwitch->get_Clicked() == true)
 	{
-		TCNT5 = 0;
-		encFalled = 0;
-		Motor::getInstance()->changeDirection();
-		pid->resetParams();
+		Serial.println(Motor::getInstance()->getPC());
+		Serial.println(Motor::getInstance()->getEncRPM());
+		Serial.println(openSwitchHitTime);
+		Timer1Start(15624);
 		open_uSwitch->set_Clicked(false);
 	}
 
-	if (Motor::getInstance()->getStatus() == MOTOR_IS_ON)
+	/*if (Motor::getInstance()->getStatus() == MOTOR_IS_ON)
 	//if (motorStart)
 	{	
 		if (timeStepValid){
@@ -213,7 +211,7 @@ void loop()
 			}
 		}
 		
-	}
+	}*/
 
 	wdt_reset();
 }
