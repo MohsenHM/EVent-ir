@@ -140,7 +140,6 @@ void loop()
 	onButton->check();
 	if (onButton->get_Clicked() == true && onButton->get_On_Off() == BSTATE_ON)
 	{
-		Serial.println("here");
 		Motor::getInstance()->resetEncPeriod();
 		Motor::getInstance()->resetPC();
 		Motor::getInstance()->setSpeed(motorSpeeds[k]);	
@@ -168,15 +167,14 @@ void loop()
 	}
 
 	if (Motor::getInstance()->getStatus() == MOTOR_IS_ON)
-	//if (motorStart)
 	{	
 		if (timeStepValid){
 			timeStepValid=0;
-			wLED->switch_led();
-			
-			//setRequiredSpeed(4);
+			wLED->switch_led();			
+			setRequiredSpeed(4);
+
 			//motorRpms[j]=Motor::getInstance()->getEncRPM();	
-			j++;
+			/*j++;
 			if(j%600==0){
 				k++;				
 				if(k==14){
@@ -198,7 +196,7 @@ void loop()
 					}
 					j=0;						
 				}				
-			}
+			}*/
 			
 		}
 		
