@@ -15,6 +15,8 @@ Motor *Motor::getInstance()
 Motor::Motor(){
     for (size_t i = 0; i < RPM_AVG_N; i++)
         this->RPMs[i]=0;
+
+       
 }
 
 void Motor::initEnc(int pin, uint8_t ioMode, void (*callback_func)(void), int interruptMode){

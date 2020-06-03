@@ -65,7 +65,7 @@ ISR(TIMER1_COMPA_vect)        // interrupt service routine that wraps a user def
 }
 
 void Timer1Start(int period){
-	//TCNT1 = 0;
+	TCNT1 = 0;
 	OCR1A = period;
 	TCCR1B |= (1 << WGM12) | (1 << CS10) | (1 << CS12);
 }

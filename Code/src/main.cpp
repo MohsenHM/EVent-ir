@@ -15,8 +15,8 @@
 #include <LCD.h>
 #include <timers.h>
 #include <callBacks.h>
-#include <PID.h>
 #include <trajectory.h>
+#include <PID.h>
 #include <string.h>
 #include <Stream.h>
 #include <math.h>
@@ -31,17 +31,13 @@ Button *open_uSwitch;
 
 LED *gLED;
 LED *ardLED;
-boolean a = false;
 Buzzer *coolBuzz;
-Motor_Driver *mot_Driver;
 
 Potentiometer *respVolume;
 Potentiometer *respCycle;
 Potentiometer *IERatio;
 
 PID *pid;
-
-Trajectory *trajectory;
 
 int table_RV[] = {200, 300, 400, 500, 600, 700, 800};
 int table_RC[23];
@@ -50,15 +46,7 @@ int table_IE[] = {1, 2, 3, 4};
 int RV = 0;
 int RC = 0;
 
-volatile int encFalled = 0;
-
-int motorSpeed = 0;
-unsigned long lastMilis = 0;
-
-char tbp[30] = "";
-int printCounter = 0;
 int j = 0, k=0;
-const int loopParam = 4;
 int motorStart = 0;
 int openSwitchHitTime=0;
 
@@ -67,10 +55,11 @@ float x[50];
 float RPM[50];
 
 int timeStepValid = 0;
-int motorSpeeds[10]={20,0,15,0,20,0,25,0,30,0};
-int motorRpms[600*2+1];
-//int8_t dir[500*2+1];
-int pc[600*2+1];
+int motorSpeeds[14]={10,0,12,0,14,0,16,0,20,0,25,0,30,0};
+float motorRpms[600*2+1];
+//nt pc[600*2+1];
+
+LED *wLED;
 
 /* ------------- Initial Check ------------*/
 
@@ -88,9 +77,19 @@ void static initial_Check()
 	}
 }
 
+
+void static setRequiredSpeed(float requiredSpeed)
+{
+    int motorSpeed = pid->Calc((float)requiredSpeed, Motor::getInstance()->getEncRPM());
+    Motor::getInstance()->setSpeed(motorSpeed);
+}
+
 void setup()
 {
 	noInterrupts();
+	float KP=2.5 ;
+    float KI=32  ;                        
+    float KD=25e-3;
 
 	for (size_t i = 8; i <= 30; i++)
 		table_RC[i - 8] = i;
@@ -107,20 +106,12 @@ void setup()
 
 	coolBuzz = new Buzzer(PinConfiguration::buzzerPin);
 
-	//mot_Driver = new Motor_Driver(Motor::getInstance());
-
 	onButton = new Button(PinConfiguration::onButton_pin);
 	onButton->setPressCallback(onButton_callback);
 
 	open_uSwitch = new Button(PinConfiguration::open_uSw_pin, INPUT, open_uSw_callback, LOW);
 
-	//gLED = new LED(PinConfiguration::gLED_pin);
-
-	//ardLED = new LED(PinConfiguration::ardLED);
-
-	/*LCD::getInstance()->LCD_Cover();
-	delay(2000);
-	LCD::getInstance()->LCD_Clear();*/
+	wLED = new LED(PinConfiguration::wLED_pin);
 
 	respVolume = new Potentiometer(PinConfiguration::Potentiometer_Volume, 7);
 	respCycle = new Potentiometer(PinConfiguration::Potentiometer_Cycle, 23);
@@ -130,9 +121,7 @@ void setup()
 	respVolume->set_Range(table_RV, sizeof table_RV);
 	IERatio->set_Range(table_IE, sizeof table_IE);
 
-	pid = new PID((float)3, (float)48, (float)0.025);
-	pid->setTimeStep(5e-3);
-	pid->setOutputRange(0, 255);
+	pid = new PID(KP, KI, KD, MINIUM_MOTOR_SPEED_IN_PWM, PID_IGNORE_COUNT, PID_GAURD_COUNT);
 
 	interrupts();
 	digitalWrite(PinConfiguration::motorDriverOnOff, HIGH);
@@ -156,7 +145,7 @@ void loop()
 		Motor::getInstance()->resetPC();
 		Motor::getInstance()->setSpeed(motorSpeeds[k]);	
 		Motor::getInstance()->motorStart();
-		//Timer1Start(77);
+		Timer1Start(77);
 		onButton->set_Clicked(false);
 	}
 	else if (onButton->get_Clicked() == true && onButton->get_On_Off() == BSTATE_OFF)
@@ -164,11 +153,9 @@ void loop()
 		Motor::getInstance()->motorStop();
 		Motor::getInstance()->resetEncPeriod();
 		Motor::getInstance()->resetPC();
-		pid->resetParams();	
 		k=0;
 		openSwitchHitTime=0;		
 		onButton->set_Clicked(false);
-
 	}
 
 	if (open_uSwitch->get_Clicked() == true)
@@ -180,38 +167,42 @@ void loop()
 		open_uSwitch->set_Clicked(false);
 	}
 
-	/*if (Motor::getInstance()->getStatus() == MOTOR_IS_ON)
+	if (Motor::getInstance()->getStatus() == MOTOR_IS_ON)
 	//if (motorStart)
 	{	
 		if (timeStepValid){
 			timeStepValid=0;
+			wLED->switch_led();
 			
-			motorRpms[j]=round(Motor::getInstance()->getEncRPM());	
-			pc[j]=Motor::getInstance()->getPC();	
+			//setRequiredSpeed(4);
+			//motorRpms[j]=Motor::getInstance()->getEncRPM();	
 			j++;
 			if(j%600==0){
-				k++;
-				Motor::getInstance()->setSpeed(motorSpeeds[k]);
-				if(k==10){
+				k++;				
+				if(k==14){
 					Motor::getInstance()->motorStop();
 					Motor::getInstance()->resetEncPeriod();
 					Motor::getInstance()->resetPC();
+				}else
+				{
+					Motor::getInstance()->setSpeed(motorSpeeds[k]);
 				}
+				
 				if (k%2==0){
 					for (int i = 0; i < j; i++)
 					{
 						Serial.print(i);
 						Serial.print("\t");
-						Serial.print(motorRpms[i]);
-						Serial.print("\t");
-						Serial.println(pc[i]);
+						Serial.println(motorRpms[i]);
+
 					}
 					j=0;						
 				}				
 			}
+			
 		}
 		
-	}*/
+	}
 
 	wdt_reset();
 }

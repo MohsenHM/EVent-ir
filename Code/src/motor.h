@@ -18,6 +18,19 @@
 #define MOTOR_ENC_PERIOD_OFF    100000
 
 #define RPM_AVG_N               8
+
+#define MAXIMUM_MOTOR_SPEED_IN_RPM 70
+#define MINIUM_MOTOR_SPEED_IN_RPM  4
+#define MINIUM_MOTOR_SPEED_IN_PWM  10
+#define TIME_STEP                  5e-3
+#define DESIRED_ROTATION           33
+#define EXHALE_DEGREE_RATIO        0.9
+#define BEFORE_OUSWITCH_MAX_DEGREE 15
+#define MOTOR_STOP_TIME            35e-3
+
+#define PID_IGNORE_COUNT           20
+#define PID_GAURD_COUNT            20
+
 class Motor
 {
 private:
@@ -36,6 +49,8 @@ private:
     int   PC=0; //Pulse Counter
     float oldRPM=0;
     float RPMs[RPM_AVG_N];
+
+
 public:
     static Motor *getInstance();
     Motor();
