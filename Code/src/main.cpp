@@ -54,7 +54,7 @@ int openSwitchHitTime=0;
 float x[50];
 float RPM[50];
 
-const int iterationLimit=1200;
+const int iterationLimit=50;
 int timeStepValid = 0;
 int motorSpeeds[14]={10,0,12,0,14,0,16,0,20,0,25,0,30,0};
 float motorCalcedRpms[iterationLimit];
@@ -145,7 +145,7 @@ void loop()
 	{
 		Motor::getInstance()->resetEncPeriod();
 		Motor::getInstance()->resetPC();
-		Motor::getInstance()->setSpeed(motorSpeeds[k]);	
+		Motor::getInstance()->setSpeed(MINIUM_MOTOR_SPEED_IN_PWM);	
 		Motor::getInstance()->motorStart();
 		Timer1Start(77);
 		onButton->set_Clicked(false);
@@ -156,6 +156,7 @@ void loop()
 		Motor::getInstance()->resetEncPeriod();
 		Motor::getInstance()->resetPC();
 		k=0;
+		j=0;
 		openSwitchHitTime=0;		
 		onButton->set_Clicked(false);
 	}
@@ -174,24 +175,16 @@ void loop()
 		if (timeStepValid){
 			timeStepValid=0;
 			wLED->switch_led();			
-			setRequiredSpeed(REQURIED_SPEED);
-			//Motor::getInstance()->setSpeed(MINIUM_MOTOR_SPEED_IN_PWM);
-			pidVal[j]=pidSetVal;
-			motorCalcedRpms[j]=Motor::getInstance()->getEncRPM();	
+			//setRequiredSpeed(REQURIED_SPEED);
+			int motorSpeed=map(analogRead(PinConfiguration::Potentiometer_Cycle), 0, 1023, 0, 255);
+			Motor::getInstance()->setSpeed(motorSpeed);
+			//pidVal[j]=pidSetVal;
+			//motorCalcedRpms[j]=Motor::getInstance()->getEncRPM();	
 			j++;
 			if(j%iterationLimit==0){
-				Motor::getInstance()->motorStop();
-				Motor::getInstance()->resetEncPeriod();
-				Motor::getInstance()->resetPC();
-				Motor::getInstance()->setSpeed(motorSpeeds[0]);
-				for (size_t i = 0; i < iterationLimit; i++)
-				{
-					Serial.print(i);
-					Serial.print("\t");
-					Serial.print(pidVal[i]);
-					Serial.print("\t");
-					Serial.println(motorCalcedRpms[i]);
-				}
+				Serial.print(motorSpeed);
+				Serial.print("\t");
+				Serial.println(Motor::getInstance()->getEncRPM());
 				j=0;						
 			}
 			
