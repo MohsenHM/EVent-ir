@@ -21,7 +21,8 @@
 
 #define MAXIMUM_MOTOR_SPEED_IN_RPM 70
 #define MINIUM_MOTOR_SPEED_IN_RPM  4
-#define MINIUM_MOTOR_SPEED_IN_PWM  10
+#define MINIUM_MOTOR_SPEED_IN_PWM  27
+#define REQURIED_SPEED             20
 #define TIME_STEP                  5e-3
 #define DESIRED_ROTATION           33
 #define EXHALE_DEGREE_RATIO        0.9

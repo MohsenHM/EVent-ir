@@ -18,7 +18,7 @@ int PID::Calc(float desired, float pv){
         oldPWM = pwm;
         stepCounter++;
     }
-    else if(stepCounter==1 && Motor::getInstance()->getEncRPM()<3){
+    else if(stepCounter==1 && Motor::getInstance()->getEncRPM()<2){
         pwm  = initialPWM;
         oldPWM = pwm;
     }
@@ -28,11 +28,17 @@ int PID::Calc(float desired, float pv){
 
         integral += error*timeStep;
 
-        derivative = (error - errorPre)/timeStep;
+        //derivative = (error - errorPre)/timeStep;
+        
+        currentFeedback=Motor::getInstance()->getEncRPM();
+
+        derivative = (currentFeedback - oldFeedback)/timeStep;
+
+        oldFeedback=currentFeedback;
 
         errorPre = error;
         
-        pwm = KP*error + KI*integral + KD*derivative;
+        pwm = KP*(0.75*desired - pv) + KI*integral + KD*derivative;
 
         if (stepCounter < stepGaurd){         
             if(pwm < initialPWM)
@@ -90,4 +96,6 @@ void PID::resetParams(){
     this->derivative=0;
     this->ignoreCounter=0;
     this->stepCounter=0;
+    this->currentFeedback=0;
+    this->oldFeedback=0;
 }

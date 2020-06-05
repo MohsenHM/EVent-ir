@@ -22,6 +22,8 @@ private:
     int   stepCounter=0;
     int   stepGaurd=0;
     int   initialPWM=0;
+    float currentFeedback=0;
+    float oldFeedback=0;
 public:
     PID(float KP, float KI, float KD, int initialPWM, int ignorePIDCount, int stepGaurd);
     int   Calc(float desired, float pv);

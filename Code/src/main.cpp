@@ -54,9 +54,12 @@ int openSwitchHitTime=0;
 float x[50];
 float RPM[50];
 
+const int iterationLimit=1200;
 int timeStepValid = 0;
 int motorSpeeds[14]={10,0,12,0,14,0,16,0,20,0,25,0,30,0};
-float motorRpms[600*2+1];
+float motorCalcedRpms[iterationLimit];
+int pidVal[iterationLimit];
+int pidSetVal=0;
 //nt pc[600*2+1];
 
 LED *wLED;
@@ -80,16 +83,16 @@ void static initial_Check()
 
 void static setRequiredSpeed(float requiredSpeed)
 {
-    int motorSpeed = pid->Calc((float)requiredSpeed, Motor::getInstance()->getEncRPM());
-    Motor::getInstance()->setSpeed(motorSpeed);
+    pidSetVal = pid->Calc((float)requiredSpeed, Motor::getInstance()->getEncRPM());
+    Motor::getInstance()->setSpeed(pidSetVal);
 }
 
 void setup()
 {
 	noInterrupts();
-	float KP=2.5 ;
-    float KI=32  ;                        
-    float KD=25e-3;
+	float KP=1.4 ;
+    float KI=8  ;                        
+    float KD=5e-2;
 
 	for (size_t i = 8; i <= 30; i++)
 		table_RC[i - 8] = i;
@@ -125,7 +128,7 @@ void setup()
 
 	interrupts();
 	digitalWrite(PinConfiguration::motorDriverOnOff, HIGH);
-	Motor::getInstance()->setSpeed(motorSpeeds[0]);
+	Motor::getInstance()->setSpeed(MINIUM_MOTOR_SPEED_IN_PWM);
 	//Motor::getInstance()->motorStart();
 	Motor::getInstance()->setDirection(DIRECTION_CLOSE);
 	Motor::getInstance()->initEnc(PinConfiguration::motorEncoderPin, INPUT, enc_callback, FALLING);
@@ -171,32 +174,26 @@ void loop()
 		if (timeStepValid){
 			timeStepValid=0;
 			wLED->switch_led();			
-			setRequiredSpeed(4);
-
-			//motorRpms[j]=Motor::getInstance()->getEncRPM();	
-			/*j++;
-			if(j%600==0){
-				k++;				
-				if(k==14){
-					Motor::getInstance()->motorStop();
-					Motor::getInstance()->resetEncPeriod();
-					Motor::getInstance()->resetPC();
-				}else
+			setRequiredSpeed(REQURIED_SPEED);
+			//Motor::getInstance()->setSpeed(MINIUM_MOTOR_SPEED_IN_PWM);
+			pidVal[j]=pidSetVal;
+			motorCalcedRpms[j]=Motor::getInstance()->getEncRPM();	
+			j++;
+			if(j%iterationLimit==0){
+				Motor::getInstance()->motorStop();
+				Motor::getInstance()->resetEncPeriod();
+				Motor::getInstance()->resetPC();
+				Motor::getInstance()->setSpeed(motorSpeeds[0]);
+				for (size_t i = 0; i < iterationLimit; i++)
 				{
-					Motor::getInstance()->setSpeed(motorSpeeds[k]);
+					Serial.print(i);
+					Serial.print("\t");
+					Serial.print(pidVal[i]);
+					Serial.print("\t");
+					Serial.println(motorCalcedRpms[i]);
 				}
-				
-				if (k%2==0){
-					for (int i = 0; i < j; i++)
-					{
-						Serial.print(i);
-						Serial.print("\t");
-						Serial.println(motorRpms[i]);
-
-					}
-					j=0;						
-				}				
-			}*/
+				j=0;						
+			}
 			
 		}
 		
