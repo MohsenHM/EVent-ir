@@ -41,8 +41,8 @@ void setup()
 	respCycle  = new Potentiometer(PinConfiguration::Potentiometer_Cycle, 4);
 	IERatio    = new Potentiometer(PinConfiguration::Potentiometer_IE, 4);
 
-	PR = new PressureSensor(PinConfiguration::PR_Out, PinConfiguration::PR_Sck, 0 ,4);
-	PR->Calibrate(100);
+	//PR = new PressureSensor(PinConfiguration::PR_Out, PinConfiguration::PR_Sck, 0 ,4);
+	//PR->Calibrate(100);
 
 	respCycle->set_Range(table_RC, sizeof table_RC);
 	respVolume->set_Range(table_RV, sizeof table_RV);
@@ -70,7 +70,7 @@ void setup()
 
 void loop()
 {
-	LCD::getInstance()->LCD_Menu(respVolume->Potentiometer_Read(), respCycle->Potentiometer_Read(), IERatio->Potentiometer_Read(), PR->Read_Pressure());
+	LCD::getInstance()->LCD_Menu(respVolume->Potentiometer_Read(), respCycle->Potentiometer_Read(), IERatio->Potentiometer_Read(), 0 /*PR->Read_Pressure()*/);
 	//LCD::getInstance()->LCD_graph();
 
 	onButton->check();
